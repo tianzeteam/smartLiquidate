@@ -112,7 +112,7 @@ func main() {
 				collateralAsset := common.HexToAddress(currUserCollateral[0].UnderlyingAsset)
 				borrowAsset := common.HexToAddress(currUserBorrow[0].UnderlyingAsset)
 				flashLoanAmount, _ := new(big.Int).SetString(currUserBorrow[0].Amount, 10)
-				//flashLoanAmount = flashLoanAmount.Mul(flashLoanAmount, big.NewInt(1)).Div(flashLoanAmount, big.NewInt(2)) //* 0.5
+				flashLoanAmount = flashLoanAmount.Mul(flashLoanAmount, big.NewInt(1)).Div(flashLoanAmount, big.NewInt(2)) //* 0.5
 				amountOutMin := big.NewInt(0)
 				liquidateAddress := common.HexToAddress(userId)
 				swapPath := []common.Address{

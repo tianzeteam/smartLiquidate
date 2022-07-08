@@ -17,6 +17,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/go-co-op/gocron v1.15.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/go-xorm/cmd/xorm v0.0.0-20190426080617-f87981e709a1 // indirect
 	github.com/tealeg/xlsx v1.0.5 // indirect

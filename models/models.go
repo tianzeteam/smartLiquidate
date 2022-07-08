@@ -23,7 +23,7 @@ type LiquidateQueue struct {
 	CollateralAsset string `xorm:"not null VARCHAR(255)"`
 	BorrowAsset     string `xorm:"not null VARCHAR(255)"`
 	BorrowAmount    string `xorm:"not null VARCHAR(255)"`
-	CreateTime      int    `xorm:"not null INT(11)"`
-	LiquidateTime   int    `xorm:"not null INT(11)"`
+	CreateTime      int64  `xorm:"not null INT(11)"`
+	LiquidateTime   int64  `xorm:"not null INT(11)"`
 	Status          string `xorm:"not null ENUM('close','waiting')"`
 }

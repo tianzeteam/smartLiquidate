@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -101,7 +100,7 @@ func task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 				klog.Error(errs)
 
 			}
-			if len(currLiquidateEntry) == 0 {
+			if len(currLiquidateEntry) == 0 && currUserBorrow[0].UnderlyingAsset != currUserCollateral[0].UnderlyingAsset {
 				liquidateQueue := new(models.LiquidateQueue)
 				liquidateQueue.UserId = userId
 				liquidateQueue.BorrowAmount = currUserBorrow[0].Amount
@@ -121,13 +120,14 @@ func task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 func main() {
 	config := InitConfig()
 	engine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
+	taskEngine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
 	client, err := ethclient.Dial(config.Account.BscMainNetHttpUrl)
 	if err != nil {
 		klog.Fatal(err)
 	}
 	goScheduler := gocron.NewScheduler(time.UTC) // 使用UTC时区
 
-	goScheduler.Every(120).Seconds().WaitForSchedule().Do(task, engine, config, client)
+	goScheduler.Every(120).Seconds().WaitForSchedule().Do(task, taskEngine, config, client)
 	goScheduler.StartAsync()
 
 	opts := &bind.CallOpts{
@@ -141,6 +141,13 @@ func main() {
 		klog.Fatal(err)
 	}
 	liquidateQueue := new(models.LiquidateQueue)
+
+	//var offset int = 0
+
+	nonce, err := client.PendingNonceAt(context.Background(), common.HexToAddress(config.Account.AccountAddr))
+	if err != nil {
+		klog.Error(err)
+	}
 
 	for {
 
@@ -191,7 +198,7 @@ func main() {
 					borrowAsset,
 				}
 
-				flashLoansV2(liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
+				flashLoans(&nonce, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
 
 			}
 
@@ -205,7 +212,7 @@ func flashLoansV2(liquidateAndLoanContract *liquidatecontract.LiquidateLoan, cli
 	return "......"
 }
 
-func flashLoans(liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address) string {
+func flashLoans(nonce *uint64, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address) string {
 
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {
@@ -216,18 +223,18 @@ func flashLoans(liquidateAndLoanContract *liquidatecontract.LiquidateLoan, clien
 		klog.Error(err)
 	}
 
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	//
-	if !ok {
-		klog.Error("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
+	/* 	publicKey := privateKey.Public()
+	   	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	   	//
+	   	if !ok {
+	   		klog.Error("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	   	}
 
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	if err != nil {
-		klog.Error(err)
-	}
+	   	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	   	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	   	if err != nil {
+	   		klog.Error(err)
+	   	} */
 
 	value := big.NewInt(0)
 	var gasPriceFloat big.Float
@@ -239,7 +246,8 @@ func flashLoans(liquidateAndLoanContract *liquidatecontract.LiquidateLoan, clien
 	gasLimit := uint64(3000101)
 
 	var non big.Int
-	non.SetUint64(nonce)
+	klog.Info("nonce--->", *nonce)
+	non.SetUint64(*nonce)
 	auth, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	auth.Nonce = &non
 	auth.Value = value
@@ -247,10 +255,14 @@ func flashLoans(liquidateAndLoanContract *liquidatecontract.LiquidateLoan, clien
 	auth.GasPrice = gasPrice
 
 	tx, err := liquidateAndLoanContract.ExecuteFlashLoans(auth, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath)
+	*nonce++
 	if err != nil {
 		klog.Error(err)
+		return ""
 	}
 	klog.Info("liquidate tx: https://kovan.etherscan.io/tx/", tx.Hash())
+	liquidateQueue.Status = "close"
+	engine.ID(liquidateQueue.Id).Update(liquidateQueue)
 	return tx.Hash().Hex()
 }
 

@@ -232,6 +232,8 @@ func main() {
 				fmt.Println("pair---->", pair)
 				if pair.Hex() != "0x0000000000000000000000000000000000000000" {
 					flashLoans(&nonce, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
+
+
 				}
 			}
 

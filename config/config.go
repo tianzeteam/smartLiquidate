@@ -7,11 +7,11 @@ type Config struct {
 }
 
 type App struct {
-	DatabaseUrl     string `yaml:"dburl"`
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	DatabaseUrl string `yaml:"dburl"`
+	Host        string `yaml:"host"`
+	Port        int    `yaml:"port"`
+	Username    string `yaml:"username"`
+	Password    string `yaml:"password"`
 }
 
 type Account struct {
@@ -24,4 +24,5 @@ type Contract struct {
 	UniswapV2Router       string `yaml:"UniswapV2Router"`
 	LiquidateLoanContract string `yaml:"LiquidateLoanContract"`
 	LendpoolContract      string `yaml:"LendpoolContract"`
+	UniswapV2Factory      string `yaml:"UniswapV2Factory"`
 }

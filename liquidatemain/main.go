@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -67,9 +68,7 @@ func task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 		MAX_DEBT_THRESHOLD := float64(0.1)
 		currentUserHealthValue, _ := userStandardHealthFactor.Float64()
 		currentUserTotalDebtEthFloat, _ := userStandardTotalDebtEth.Float64()
-		//fmt.Println("debtThreshold:::", MAX_DEBT_THRESHOLD)
-		//fmt.Println("totalDebtEthFloat:::", currentUserTotalDebtEthFloat)
-		//fmt.Println("当前用户健康值:::", currentUserHealthValue)
+
 		if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD {
 
 			currUserCollateral := make([]models.AaveAsset, 0)
@@ -117,6 +116,29 @@ func task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 	log.Println("--------------清算队列数据整理结束-------------")
 }
 
+func getNonce(client *ethclient.Client, priKey string) (uint64, error) {
+	privateKey, err := crypto.HexToECDSA(priKey)
+	if err != nil {
+		klog.Error(err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	//
+	if !ok {
+		klog.Error("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		klog.Error(err)
+		return nonce, err
+	}
+	klog.Info("nonce----------------->", nonce)
+	return nonce, nil
+}
+
 func main() {
 	config := InitConfig()
 	engine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
@@ -124,6 +146,7 @@ func main() {
 	client, err := ethclient.Dial(config.Account.BscMainNetHttpUrl)
 	if err != nil {
 		klog.Fatal(err)
+
 	}
 	goScheduler := gocron.NewScheduler(time.UTC) // 使用UTC时区
 
@@ -137,20 +160,20 @@ func main() {
 
 	lendpoolContract, _ := liquidatecontract.NewLendPool(common.HexToAddress(config.Contract.LendpoolContract), client)
 	liquidateAndLoanContract, err := liquidatecontract.NewLiquidateLoan(common.HexToAddress(config.Contract.LiquidateLoanContract), client)
+	uniswapFactoryContract, err := liquidatecontract.NewFactory(common.HexToAddress(config.Contract.UniswapV2Factory), client)
 	if err != nil {
 		klog.Fatal(err)
 	}
-	liquidateQueue := new(models.LiquidateQueue)
 
-	//var offset int = 0
-
-	nonce, err := client.PendingNonceAt(context.Background(), common.HexToAddress(config.Account.AccountAddr))
+	nonce, err := getNonce(client, config.Account.AccountPriKey)
 	if err != nil {
-		klog.Error(err)
+		//klog.Error(err)
+		klog.Fatal("访问rpc节点网络问题,清算进程退出")
+		return
 	}
 
 	for {
-
+		liquidateQueue := new(models.LiquidateQueue)
 		liquidateEntrys, err := engine.Where("id >?", 1).And("status = ?", "waiting").Rows(liquidateQueue)
 		if err != nil {
 			log.Fatal(err)
@@ -172,19 +195,23 @@ func main() {
 			}
 
 			userHealthFactor := big.NewFloat(0).SetInt(HeathFactorData.HealthFactor)
+			userTotalCollateralETH := big.NewFloat(0).SetInt(HeathFactorData.TotalCollateralETH)
 			userTotalDebtETH := big.NewFloat(0).SetInt(HeathFactorData.TotalDebtETH)
 			decimals := big.NewFloat(math.Pow(10, float64(18))) //精度
 			userStandardHealthFactor := new(big.Float).Quo(userHealthFactor, decimals)
 			userStandardTotalDebtEth := new(big.Float).Quo(userTotalDebtETH, decimals)
+			userStandardTotalCollateralEth := new(big.Float).Quo(userTotalCollateralETH, decimals)
 			//fmt.Println("用户债务健康值:::",standardHealthFactor)
 			MAX_HEALTH_THRESHOLD := float64(1)
 			MAX_DEBT_THRESHOLD := float64(0.1)
+			MAX_COLLATERAL_THRESHOLD := float64(0.15)
 			currentUserHealthValue, _ := userStandardHealthFactor.Float64()
 			currentUserTotalDebtEthFloat, _ := userStandardTotalDebtEth.Float64()
-			fmt.Println("debtThreshold:::", MAX_DEBT_THRESHOLD)
+			currentUserTotalCollateralEth, _ := userStandardTotalCollateralEth.Float64()
+			fmt.Println("TotalCollateralEthFloat:::", currentUserTotalCollateralEth)
 			fmt.Println("totalDebtEthFloat:::", currentUserTotalDebtEthFloat)
 			fmt.Println("当前用户健康值:::", currentUserHealthValue)
-			if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD {
+			if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD && currentUserTotalCollateralEth > MAX_COLLATERAL_THRESHOLD {
 				fmt.Println("用户id:::", userId)
 
 				collateralAsset := common.HexToAddress(liquidateQueue.CollateralAsset)
@@ -197,14 +224,21 @@ func main() {
 					collateralAsset, //用奖励抵押物资产 兑换 借贷资产
 					borrowAsset,
 				}
-
-				flashLoans(&nonce, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
-
+				pair, err := uniswapFactoryContract.GetPair(opts, collateralAsset, borrowAsset)
+				if err != nil {
+					klog.Fatalln("清算进程中货币对获取异常")
+					continue
+				}
+				fmt.Println("pair---->", pair)
+				if pair.Hex() != "0x0000000000000000000000000000000000000000" {
+					flashLoans(&nonce, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
+				}
 			}
 
 		}
 
 		time.Sleep(time.Duration(5) * time.Second)
+
 	}
 }
 
@@ -223,19 +257,6 @@ func flashLoans(nonce *uint64, engine *xorm.Engine, liquidateQueue *models.Liqui
 		klog.Error(err)
 	}
 
-	/* 	publicKey := privateKey.Public()
-	   	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	   	//
-	   	if !ok {
-	   		klog.Error("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	   	}
-
-	   	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	   	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-	   	if err != nil {
-	   		klog.Error(err)
-	   	} */
-
 	value := big.NewInt(0)
 	var gasPriceFloat big.Float
 	gasPriceFloat.SetString("23") //200 GWei
@@ -246,7 +267,7 @@ func flashLoans(nonce *uint64, engine *xorm.Engine, liquidateQueue *models.Liqui
 	gasLimit := uint64(3000101)
 
 	var non big.Int
-	klog.Info("nonce--->", *nonce)
+	//klog.Info("nonce----------------->", *nonce)
 	non.SetUint64(*nonce)
 	auth, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	auth.Nonce = &non
@@ -262,6 +283,7 @@ func flashLoans(nonce *uint64, engine *xorm.Engine, liquidateQueue *models.Liqui
 	}
 	klog.Info("liquidate tx: https://kovan.etherscan.io/tx/", tx.Hash())
 	liquidateQueue.Status = "close"
+	liquidateQueue.LiquidateTime = time.Now().Unix()
 	engine.ID(liquidateQueue.Id).Update(liquidateQueue)
 	return tx.Hash().Hex()
 }

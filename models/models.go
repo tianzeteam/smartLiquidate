@@ -17,6 +17,15 @@ type LiquidateUser struct {
 	UserId string `xorm:"not null VARCHAR(255)"`
 }
 
+type LiquidateResult struct {
+	Id           int    `xorm:"not null pk autoincr INT(11)"`
+	UserId       string `xorm:"not null VARCHAR(255)"`
+	ReceiptAsset string `xorm:"not null VARCHAR(255)"`
+	TxHash       string `xorm:"not null VARCHAR(255)"`
+	CreateTime   int64  `xorm:"not null INT(11)"`
+	Status       string `xorm:"not null ENUM('pending','fail','success')"`
+}
+
 type LiquidateQueue struct {
 	Id              int    `xorm:"not null pk autoincr INT(11)"`
 	UserId          string `xorm:"not null VARCHAR(255)"`

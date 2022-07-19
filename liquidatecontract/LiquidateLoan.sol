@@ -16,21 +16,13 @@ import "./IUniswapV2Router02.sol";
 */
 contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
-    ILendingPoolAddressesProvider provider;
     IUniswapV2Router02 uniswapV2Router;
     using SafeMath for uint256;
-
-    address lendingPoolAddr;
-
-
     event ErrorHandled(string stringFailure);
 
     // create contract instance address on kovan net  :0x9700d27a4e3da01382ccebd31dc758d7378d28e4
     // intantiate lending pool addresses provider and get lending pool address
     constructor(ILendingPoolAddressesProvider _addressProvider, IUniswapV2Router02 _uniswapV2Router) FlashLoanReceiverBase(_addressProvider) public {
-        provider = _addressProvider;  //0x88757f2f99175387aB4C6a4b3067c77A695b0349
-        lendingPoolAddr = provider.getLendingPool();
-
         // instantiate UniswapV2 Router02
         uniswapV2Router = IUniswapV2Router02(address(_uniswapV2Router)); //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
 

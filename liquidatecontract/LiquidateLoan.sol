@@ -20,7 +20,6 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
     using SafeMath for uint256;
     event ErrorHandled(string stringFailure);
 
-    // create contract instance address on kovan net  :0x9700d27a4e3da01382ccebd31dc758d7378d28e4
     // intantiate lending pool addresses provider and get lending pool address
     constructor(ILendingPoolAddressesProvider _addressProvider, IUniswapV2Router02 _uniswapV2Router) FlashLoanReceiverBase(_addressProvider) public {
         // instantiate UniswapV2 Router02
@@ -66,8 +65,8 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
         // Approve the LendingPool contract allowance to *pull* the owed amount
         // i.e. AAVE V2's way of repaying the flash loan
-        uint amountOwing = amounts[0].add(premiums[0]).add(1);
-        IERC20(assets[0]).approve(address(_lendingPool), amountOwing);
+        uint repayAmount = amounts[0].add(premiums[0]).add(1);
+        IERC20(assets[0]).approve(address(_lendingPool), repayAmount);
 
         return true;
     }
@@ -91,23 +90,18 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
     //assumes the balance of the token is on the contract
     function swapToBarrowedAsset(address asset_from, address asset_to, uint amountOutMin, address[] memory swapPath ) public {
-        
-        IERC20 asset_fromToken;
-        uint256 amountToTrade;
-        uint deadline;
 
         // setting deadline to avoid scenario where miners hang onto it and execute at a more profitable time
-        deadline = block.timestamp + 300; // 5 minutes
+        uint deadline = block.timestamp + 120; // 2 minutes
 
-        asset_fromToken = IERC20(asset_from);
-        amountToTrade = asset_fromToken.balanceOf(address(this));
+        uint256 amountIn = IERC20(asset_from).balanceOf(address(this));
 
         // grant uniswap access to your token
-        asset_fromToken.approve(address(uniswapV2Router), amountToTrade);
+        IERC20(asset_from).approve(address(uniswapV2Router), amountToTrade);
 
         // Trade 1: Execute swap from asset_from into designated ERC20 (asset_to) token on UniswapV2
         try uniswapV2Router.swapExactTokensForTokens(
-            amountToTrade,
+            amountIn,
             amountOutMin,
             swapPath,
             address(this),
@@ -151,21 +145,18 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         uint256[] memory modes = new uint256[](1);
         modes[0] = 0;
 
-        address onBehalfOf = address(this);
         //only for testing. must remove
-
         // passing these params to executeOperation so that they can be used to liquidate the loan and perform the swap
         bytes memory params = abi.encode(_collateral, _userToLiquidate, _amountOutMin, _swapPath);
-        uint16 referralCode = 0;
 
         _lendingPool.flashLoan(
             address(this),
             assets,
             amounts,
             modes,
-            onBehalfOf,
+            address(this),
             params,
-            referralCode
+            0
         );
     }
 

@@ -5,6 +5,8 @@ type Config struct {
 	Account   *Account   `yaml:"account"`
 	Contract  *Contract  `yaml:"contract"`
 	Liquidate *Liquidate `yaml:"liquidate"`
+	BaseToken *BaseToken `yaml:"baseToken"`
+	ChainId   *ChainId   `yaml:"chainId"`
 }
 
 type App struct {
@@ -13,12 +15,15 @@ type App struct {
 	Port        int    `yaml:"port"`
 	Username    string `yaml:"username"`
 	Password    string `yaml:"password"`
+	Runing      bool   `yaml:"Runing"`
 }
 
 type Account struct {
 	RpcHttpUrl    string `yaml:"RpcHttpUrl"`
 	AccountPriKey string `yaml:"AccountPriKey"`
 	AccountAddr   string `yaml:"AccountAddr"`
+	GasPrice      string `yaml:"GasPrice"`
+	GasLimit      int    `yaml:"GasLimit"`
 }
 
 type Contract struct {
@@ -34,4 +39,13 @@ type Liquidate struct {
 	MAX_DEBT_THRESHOLD       float64 `yaml:"MAX_DEBT_THRESHOLD"`
 }
 
+type BaseToken struct {
+	Aave string `yaml:"Aave"`
+	Usdt string `yaml:"Usdt"`
+	Weth string `yaml:"Weth"`
+	Dai  string `yaml:"Dai"`
+}
 
+type ChainId struct {
+	Network int `yaml:"Network"`
+}

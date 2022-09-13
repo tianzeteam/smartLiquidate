@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
-	"math/big"
+
 	"swap/config"
-	"swap/liquidateswap"
+	"swap/core"
 	"swap/scheduler"
 	"swap/utils"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/xormplus/xorm"
 	"gopkg.in/yaml.v2"
 
+	"swap/counter"
 	"swap/liquidatecontract"
 	models "swap/models"
 
@@ -29,10 +29,12 @@ import (
 )
 
 func main() {
+
 	config := InitConfig()
 	engine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
 	taskEngine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
 	client, err := ethclient.Dial(config.Account.RpcHttpUrl)
+
 	if err != nil {
 		klog.Fatal(err)
 
@@ -53,88 +55,56 @@ func main() {
 	if err != nil {
 		klog.Fatal(err)
 	}
-	nonce, err := liquidateswap.GetNonce(client, config.Account.AccountPriKey)
+	nonce, err := utils.GetNonce(client, config.Account.AccountPriKey)
+	counter := counter.NewMutexCounter(nonce)
+	klog.Infoln(" counter ", counter.Read())
 	if err != nil {
 		//klog.Error(err)
 		klog.Fatal("访问rpc节点网络问题,清算进程退出")
 		return
 	}
 
+	asyn_channel := make(chan models.LiquidateQueue, 120) // capacity size > rows
+
 	for {
-		liquidateQueue := new(models.LiquidateQueue)
-		liquidateEntrys, err := engine.Where("id >?", 1).And("status = ?", "waiting").Rows(liquidateQueue)
-		if err != nil {
-			log.Fatal(err)
-			return
+		Runing := config.App.Runing
+		liquidateQueue := new(models.LiquidateQueue) // 实例化 LiquidateQueue struct ，指向pointer
+		//count, _ := engine.Where("id >?", 1).And("status = ?", "waiting").Count(liquidateQueue)
+		count := int64(240)
+		var skim int64
+		if count%int64(120) == 0 {
+			skim = (count / int64(120))
+		}else{
+			skim = (count / int64(120)) + 1
 		}
-		defer liquidateEntrys.Close()
-		for liquidateEntrys.Next() {
-			err = liquidateEntrys.Scan(liquidateQueue)
-			userId := liquidateQueue.UserId
-
+		fmt.Println(" count ", count)
+		fmt.Println(" skim ", skim)
+		for i := 0; i < int(skim); i++ {
+			offset := i * 120
+			liquidateEntrys, err := engine.Limit(120, offset).Where("id >?", 1).And("status = ?", "waiting").Rows(liquidateQueue)
 			if err != nil {
-				klog.Error(err)
+				log.Fatal(err)
+				return
 			}
-
-			HeathFactorData, err := lendpoolContract.GetUserAccountData(opts, common.HexToAddress(userId))
-			if err != nil {
-				klog.Error(err)
-				continue
-			}
-
-			userHealthFactor := big.NewFloat(0).SetInt(HeathFactorData.HealthFactor)
-			userTotalCollateralETH := big.NewFloat(0).SetInt(HeathFactorData.TotalCollateralETH)
-			userTotalDebtETH := big.NewFloat(0).SetInt(HeathFactorData.TotalDebtETH)
-			decimals := big.NewFloat(math.Pow(10, float64(18))) //精度
-			userStandardHealthFactor := new(big.Float).Quo(userHealthFactor, decimals)
-			userStandardTotalDebtEth := new(big.Float).Quo(userTotalDebtETH, decimals)
-			userStandardTotalCollateralEth := new(big.Float).Quo(userTotalCollateralETH, decimals)
-			//fmt.Println("用户债务健康值:::",standardHealthFactor)
-			MAX_HEALTH_THRESHOLD := config.Liquidate.MAX_HEALTH_THRESHOLD
-			MAX_DEBT_THRESHOLD := config.Liquidate.MAX_DEBT_THRESHOLD
-			MAX_COLLATERAL_THRESHOLD := config.Liquidate.MAX_COLLATERAL_THRESHOLD
-			currentUserHealthValue, _ := userStandardHealthFactor.Float64()
-			currentUserTotalDebtEthFloat, _ := userStandardTotalDebtEth.Float64()
-			currentUserTotalCollateralEth, _ := userStandardTotalCollateralEth.Float64()
-			fmt.Println("TotalCollateralEthFloat:::", currentUserTotalCollateralEth)
-			fmt.Println("totalDebtEthFloat:::", currentUserTotalDebtEthFloat)
-			fmt.Println("当前用户健康值:::", currentUserHealthValue)
-			utils.GetBestTradeExactIn(liquidateQueue.CollateralAsset,liquidateQueue.BorrowAsset,big.NewInt(20000),uniswapFactoryContract)
-			if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD && currentUserTotalCollateralEth > MAX_COLLATERAL_THRESHOLD {
-				fmt.Println("用户id:::", userId)
-
-				collateralAsset := common.HexToAddress(liquidateQueue.CollateralAsset)
-				borrowAsset := common.HexToAddress(liquidateQueue.BorrowAsset)
-				flashLoanAmount, _ := new(big.Int).SetString(liquidateQueue.BorrowAmount, 10)
-				flashLoanAmount = flashLoanAmount.Mul(flashLoanAmount, big.NewInt(1)).Div(flashLoanAmount, big.NewInt(2)) //* 0.5
-				amountOutMin := big.NewInt(0)
-				liquidateAddress := common.HexToAddress(userId)
-				swapPath := []common.Address{
-					collateralAsset, //用奖励抵押物资产 兑换 借贷资产
-					borrowAsset,
-				}
-				pair, err := uniswapFactoryContract.GetPair(opts, collateralAsset, borrowAsset)
+			defer liquidateEntrys.Close()
+			for liquidateEntrys.Next() {
+				err = liquidateEntrys.Scan(liquidateQueue)
+				asyn_channel <- *liquidateQueue
 				if err != nil {
-					klog.Fatalln("清算进程中获取货币对异常")
-					continue
+					klog.Error(err)
 				}
-				fmt.Println("pair---->", pair)
-				if pair.Hex() != "0x0000000000000000000000000000000000000000" {
-					TxHash := liquidateswap.FlashLoans(&nonce, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath)
+				// Goroutine
 
-					if TxHash != "fail" {
-						liquidateResult := new(models.LiquidateResult)
-						liquidateResult.UserId = userId
-						liquidateResult.ReceiptAsset = liquidateQueue.BorrowAsset
-						liquidateResult.TxHash = TxHash
-						liquidateResult.CreateTime = time.Now().Unix()
-						liquidateResult.Status = "pending"
-						engine.InsertOne(liquidateResult)
-					}
+				if Runing {
+					go func() {
+						ConsumerQueue := <-asyn_channel
+						core.Process(counter, engine, &ConsumerQueue, liquidateAndLoanContract, client, lendpoolContract, opts, config, uniswapFactoryContract)
+					}()
 				}
+
 			}
-
 		}
+		klog.Info("进入 sleep 过程")
 
 		time.Sleep(time.Duration(5) * time.Second)
 

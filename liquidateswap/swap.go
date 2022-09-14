@@ -27,7 +27,7 @@ import (
 	"k8s.io/klog"
 )
 
-func FlashLoans(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address, userId string, _gasPrice string, _gasLimit int) string {
+func FlashLoans(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address, userId string, _gasPrice string, _gasLimit int,_gasCost int64) string {
 
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {
@@ -54,7 +54,9 @@ func FlashLoans(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *m
 	auth.GasLimit = gasLimit
 	auth.GasPrice = gasPrice
 
-	tx, err := liquidateAndLoanContract.ExecuteFlashLoans(auth, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath)
+	gasCost := big.NewInt(_gasCost);
+
+	tx, err := liquidateAndLoanContract.ExecuteFlashLoans(auth, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath,gasCost)
 
 	if err != nil {
 		klog.Error(err)

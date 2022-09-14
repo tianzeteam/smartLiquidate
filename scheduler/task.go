@@ -18,7 +18,7 @@ import (
 	"k8s.io/klog"
 )
 
-func Task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) error{
+func Task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) error {
 	log.Println("--------------清算队列数据整理开始-------------")
 	lendpoolContract, _ := liquidatecontract.NewLendPool(common.HexToAddress(config.Contract.LendpoolContract), client)
 
@@ -44,17 +44,17 @@ func Task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 		}
 
 		userHealthFactor := big.NewFloat(0).SetInt(HeathFactorData.HealthFactor)
-		userTotalDebtETH := big.NewFloat(0).SetInt(HeathFactorData.TotalDebtETH)
+		userCollateralETH := big.NewFloat(0).SetInt(HeathFactorData.TotalCollateralETH)
 		decimals := big.NewFloat(math.Pow(10, float64(18))) //精度
 		userStandardHealthFactor := new(big.Float).Quo(userHealthFactor, decimals)
-		userStandardTotalDebtEth := new(big.Float).Quo(userTotalDebtETH, decimals)
+		userCollateralEthWithDecimals := new(big.Float).Quo(userCollateralETH, decimals)
 
-		MAX_HEALTH_THRESHOLD := float64(1.5)
-		MAX_DEBT_THRESHOLD := float64(0.1)
+		PENDING_HEALTH_THRESHOLD := config.Liquidate.PENDING_HEALTH_THRESHOLD
+		MAX_COLLATERAL_THRESHOLD := config.Liquidate.MAX_COLLATERAL_THRESHOLD
 		currentUserHealthValue, _ := userStandardHealthFactor.Float64()
-		currentUserTotalDebtEthFloat, _ := userStandardTotalDebtEth.Float64()
+		userCollateralEthWithDecimalsFloat, _ := userCollateralEthWithDecimals.Float64()
 
-		if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD {
+		if currentUserHealthValue < PENDING_HEALTH_THRESHOLD && userCollateralEthWithDecimalsFloat > MAX_COLLATERAL_THRESHOLD {
 
 			currUserCollateral := make([]models.AaveAsset, 0)
 			err := engine.Where("user_id = ?", userId).And("asset_type = ?", "collateral").Find(&currUserCollateral)

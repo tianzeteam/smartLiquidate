@@ -69,13 +69,12 @@ func main() {
 	for {
 		Runing := config.App.Runing
 		liquidateQueue := new(models.LiquidateQueue) // 实例化 LiquidateQueue struct ，指向pointer
-		//count, _ := engine.Where("id >?", 1).And("status = ?", "waiting").Count(liquidateQueue)
-		count := int64(240)
+		count, _ := engine.Where("id >?", 1).And("status = ?", "waiting").Count(liquidateQueue)
 		var skim int64
-		if count%int64(120) == 0 {
-			skim = (count / int64(120))
-		}else{
-			skim = (count / int64(120)) + 1
+		if count % int64(120) == 0 {
+			skim = count / int64(120)
+		} else {
+			skim = count / int64(120) + 1
 		}
 		fmt.Println(" count ", count)
 		fmt.Println(" skim ", skim)

@@ -24,6 +24,7 @@ type Account struct {
 	AccountAddr   string `yaml:"AccountAddr"`
 	GasPrice      string `yaml:"GasPrice"`
 	GasLimit      int    `yaml:"GasLimit"`
+	GasCost       int64    `yaml:"GasCost"`
 }
 
 type Contract struct {
@@ -37,6 +38,7 @@ type Liquidate struct {
 	MAX_HEALTH_THRESHOLD     float64 `yaml:"MAX_HEALTH_THRESHOLD"`
 	MAX_COLLATERAL_THRESHOLD float64 `yaml:"MAX_COLLATERAL_THRESHOLD"`
 	MAX_DEBT_THRESHOLD       float64 `yaml:"MAX_DEBT_THRESHOLD"`
+	PENDING_HEALTH_THRESHOLD float64 `yaml:"PENDING_HEALTH_THRESHOLD"`
 }
 
 type BaseToken struct {

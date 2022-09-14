@@ -7778,22 +7778,22 @@ func (_LiquidateLoan *LiquidateLoanCallerSession) Owner() (common.Address, error
 // ExecuteFlashLoans is a paid mutator transaction binding the contract method 0x9b770a64.
 //
 // Solidity: function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] _swapPath) returns()
-func (_LiquidateLoan *LiquidateLoanTransactor) ExecuteFlashLoans(opts *bind.TransactOpts, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address) (*types.Transaction, error) {
-	return _LiquidateLoan.contract.Transact(opts, "executeFlashLoans", _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath)
+func (_LiquidateLoan *LiquidateLoanTransactor) ExecuteFlashLoans(opts *bind.TransactOpts, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address,_gasCost *big.Int) (*types.Transaction, error) {
+	return _LiquidateLoan.contract.Transact(opts, "executeFlashLoans", _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath,_gasCost)
 }
 
 // ExecuteFlashLoans is a paid mutator transaction binding the contract method 0x9b770a64.
 //
 // Solidity: function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] _swapPath) returns()
-func (_LiquidateLoan *LiquidateLoanSession) ExecuteFlashLoans(_assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address) (*types.Transaction, error) {
-	return _LiquidateLoan.Contract.ExecuteFlashLoans(&_LiquidateLoan.TransactOpts, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath)
+func (_LiquidateLoan *LiquidateLoanSession) ExecuteFlashLoans(_assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address,_gasCost *big.Int) (*types.Transaction, error) {
+	return _LiquidateLoan.Contract.ExecuteFlashLoans(&_LiquidateLoan.TransactOpts, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath,_gasCost)
 }
 
 // ExecuteFlashLoans is a paid mutator transaction binding the contract method 0x9b770a64.
 //
 // Solidity: function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] _swapPath) returns()
-func (_LiquidateLoan *LiquidateLoanTransactorSession) ExecuteFlashLoans(_assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address) (*types.Transaction, error) {
-	return _LiquidateLoan.Contract.ExecuteFlashLoans(&_LiquidateLoan.TransactOpts, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath)
+func (_LiquidateLoan *LiquidateLoanTransactorSession) ExecuteFlashLoans(_assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address,_gasCost *big.Int) (*types.Transaction, error) {
+	return _LiquidateLoan.Contract.ExecuteFlashLoans(&_LiquidateLoan.TransactOpts, _assetToLiquidate, _flashAmt, _collateral, _userToLiquidate, _amountOutMin, _swapPath,_gasCost)
 }
 
 // ExecuteOperation is a paid mutator transaction binding the contract method 0x920f5c84.

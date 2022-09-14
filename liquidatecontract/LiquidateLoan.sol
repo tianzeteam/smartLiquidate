@@ -36,48 +36,50 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         address[] calldata assets,
         uint256[] calldata amounts,
         uint256[] calldata premiums,
-        address initiator,
+        address ,
         bytes calldata params
     )
         external
         override
         returns (bool)
     {
-
+        address  borrowAsset = assets[0];
+        uint256 liquidateAmount = amounts[0];
+        uint256 premium = premiums[0];
         //collateral  the address of the token that we will be compensated in
         //userToLiquidate - id of the user to liquidate
         //amountOutMin - minimum amount of asset paid when swapping collateral
 
-        (address collateral, address userToLiquidate, uint256 amountOutMin, address[] memory swapPath) = abi.decode(params, (address, address, uint256, address[]));
+        (address collateral, address userToLiquidate, uint256 amountOutMin, address[] memory swapPath,uint256 gasCost) = abi.decode(params, (address, address, uint256, address[],uint256));
 
         //liquidate unhealthy loan
-        liquidateLoan(collateral, assets[0], userToLiquidate, amounts[0], false);
+        liquidateLoan(collateral, borrowAsset, userToLiquidate, liquidateAmount, false);
 
         //swap collateral from liquidate back to asset from flashloan to pay it off
-        swapToBarrowedAsset(collateral,assets[0],amountOutMin, swapPath);
+        swapToBarrowedAsset(collateral,amountOutMin, swapPath);
 
         //Pay to owner the balance after fees
-        uint256 profit = calcProfits(IERC20(assets[0]).balanceOf(address(this)),amounts[0],premiums[0]);
+        uint256 profit = calcProfits(IERC20(borrowAsset).balanceOf(address(this)),liquidateAmount,premium,gasCost);
 
         require(profit > 0 , "No profit");
-        IERC20(assets[0]).transfer(owner(), profit);
+        IERC20(borrowAsset).transfer(owner(), profit);
 
 
         // Approve the LendingPool contract allowance to *pull* the owed amount
         // i.e. AAVE V2's way of repaying the flash loan
-        uint repayAmount = amounts[0].add(premiums[0]).add(1);
-        IERC20(assets[0]).approve(address(_lendingPool), repayAmount);
+        uint repayAmount = liquidateAmount.add(premium).add(1);
+        IERC20(borrowAsset).approve(address(_lendingPool), repayAmount);
 
         return true;
     }
 
     //calculate profits after paying back loan & fees
-    function calcProfits(uint256 _balance, uint256 _loanAmount, uint256 _loanFee)
+    function calcProfits(uint256 _balance, uint256 _loanAmount, uint256 _loanFee,uint256 _gasCost)
         pure
         private
         returns(uint256)
     {
-        return _balance.sub(_loanAmount.add(_loanFee),"no profits to return");
+        return _balance.sub(_loanAmount.add(_loanFee).add(_gasCost),"no profits to return");
     }
 
     function liquidateLoan(address _collateral, address _liquidate_asset, address _userToLiquidate, uint256 _amount, bool _receiveaToken) public {
@@ -89,7 +91,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
 
     //assumes the balance of the token is on the contract
-    function swapToBarrowedAsset(address asset_from, address asset_to, uint amountOutMin, address[] memory swapPath ) public {
+    function swapToBarrowedAsset(address asset_from, uint amountOutMin, address[] memory swapPath ) public {
 
         // setting deadline to avoid scenario where miners hang onto it and execute at a more profitable time
         uint deadline = block.timestamp + 120; // 2 minutes
@@ -97,7 +99,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         uint256 amountIn = IERC20(asset_from).balanceOf(address(this));
 
         // grant uniswap access to your token
-        IERC20(asset_from).approve(address(uniswapV2Router), amountToTrade);
+        IERC20(asset_from).approve(address(uniswapV2Router), uint256(-1));
 
         // Trade 1: Execute swap from asset_from into designated ERC20 (asset_to) token on UniswapV2
         try uniswapV2Router.swapExactTokensForTokens(
@@ -131,7 +133,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
     * _swapPath - the path that uniswap will use to swap tokens back to original tokens
 
     */
-    function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] memory _swapPath) public onlyOwner {
+    function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] memory _swapPath,uint256 _gasCost) public onlyOwner {
 
         // the various assets to be flashed
         address[] memory assets = new address[](1);
@@ -147,7 +149,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
         //only for testing. must remove
         // passing these params to executeOperation so that they can be used to liquidate the loan and perform the swap
-        bytes memory params = abi.encode(_collateral, _userToLiquidate, _amountOutMin, _swapPath);
+        bytes memory params = abi.encode(_collateral, _userToLiquidate, _amountOutMin, _swapPath,_gasCost);
 
         _lendingPool.flashLoan(
             address(this),

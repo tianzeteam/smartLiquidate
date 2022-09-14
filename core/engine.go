@@ -59,7 +59,7 @@ func Process( _counter counter.Counter, engine *xorm.Engine, liquidateQueue *mod
 			return
 		}
 		klog.Infoln(" 对用户  "+userId+"  开始执行清算 queueID ", liquidateQueue.Id)
-		liquidateswap.FlashLoans(_counter, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath, userId, config.Account.GasPrice, config.Account.GasLimit)
+		liquidateswap.FlashLoans(_counter, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath, userId, config.Account.GasPrice, config.Account.GasLimit,config.Account.GasCost)
 
 	}
 }

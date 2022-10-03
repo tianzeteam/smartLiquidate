@@ -11,9 +11,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xormplus/xorm"
 
+	"swap/counter"
 	"swap/liquidatecontract"
 	models "swap/models"
-	"swap/counter"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,7 +21,7 @@ import (
 	"k8s.io/klog"
 )
 
-func Process( _counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, lendpoolContract *liquidatecontract.LendPool, opts *bind.CallOpts, config *config.Config, uniswapFactoryContract *liquidatecontract.Factory) {
+func Process(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.Liquidatecontract, client *ethclient.Client, lendpoolContract *liquidatecontract.Lendpool, opts *bind.CallOpts, config *config.Config, uniswapFactoryContract *liquidatecontract.Factory) {
 	userId := liquidateQueue.UserId
 	HeathFactorData, err := lendpoolContract.GetUserAccountData(opts, common.HexToAddress(userId))
 	if err != nil {
@@ -42,11 +42,11 @@ func Process( _counter counter.Counter, engine *xorm.Engine, liquidateQueue *mod
 	currentUserTotalDebtEthFloat, _ := userStandardTotalDebtEth.Float64()
 	currentUserTotalCollateralEth, _ := userStandardTotalCollateralEth.Float64()
 
-	fmt.Println("当前用户健康值:::", currentUserHealthValue)
+	fmt.Println("当前用户健康值:::%s  , 用户id:::%s", currentUserHealthValue, userId)
 
 	if currentUserHealthValue < MAX_HEALTH_THRESHOLD && currentUserTotalDebtEthFloat > MAX_DEBT_THRESHOLD && currentUserTotalCollateralEth > MAX_COLLATERAL_THRESHOLD {
 
-		fmt.Println("用户id:::", userId)
+		//fmt.Println("用户id:::", userId)
 		collateralAsset := common.HexToAddress(liquidateQueue.CollateralAsset)
 		borrowAsset := common.HexToAddress(liquidateQueue.BorrowAsset)
 		flashLoanAmount, _ := new(big.Int).SetString(liquidateQueue.BorrowAmount, 10)
@@ -59,7 +59,7 @@ func Process( _counter counter.Counter, engine *xorm.Engine, liquidateQueue *mod
 			return
 		}
 		klog.Infoln(" 对用户  "+userId+"  开始执行清算 queueID ", liquidateQueue.Id)
-		liquidateswap.FlashLoans(_counter, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath, userId, config.Account.GasPrice, config.Account.GasLimit,config.Account.GasCost)
+		liquidateswap.FlashLoans(_counter, engine, liquidateQueue, liquidateAndLoanContract, client, config.Account.AccountPriKey, borrowAsset, flashLoanAmount, collateralAsset, liquidateAddress, amountOutMin, swapPath, userId, config.Account.GasPrice, config.Account.GasLimit, config.Account.GasCost)
 
 	}
 }

@@ -21,6 +21,7 @@ require (
 	github.com/go-co-op/gocron v1.15.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-xorm/cmd/xorm v0.0.0-20190426080617-f87981e709a1 // indirect
+	github.com/graphql-go/graphql v0.8.0 // indirect
 	github.com/miraclesu/uniswap-sdk-go v0.2.9 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/tealeg/xlsx v1.0.5 // indirect
@@ -30,6 +31,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
 	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
 	gopkg.in/flosch/pongo2.v3 v3.0.0-20141028000813-5e81b817a0c4 // indirect
+	gopkg.in/jmcvetta/napping.v3 v3.2.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/klog v1.0.0
 )

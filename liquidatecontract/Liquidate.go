@@ -28,9 +28,31 @@ var (
 	_ = event.NewSubscription
 )
 
+// LiquidateLoanBorrowReserve is an auto generated low-level Go binding around an user-defined struct.
+type LiquidateLoanBorrowReserve struct {
+	CurrentTotalDebt         *big.Int
+	Symbol                   string
+	UnderlyingAsset          common.Address
+	Decimals                 *big.Int
+	UsageAsCollateralEnabled bool
+	PriceInEth               *big.Int
+	NotNull                  bool
+}
+
+// LiquidateLoanCollateralReserve is an auto generated low-level Go binding around an user-defined struct.
+type LiquidateLoanCollateralReserve struct {
+	CurrentATokenBalance     *big.Int
+	Symbol                   string
+	UnderlyingAsset          common.Address
+	Decimals                 *big.Int
+	UsageAsCollateralEnabled bool
+	PriceInEth               *big.Int
+	NotNull                  bool
+}
+
 // LiquidatecontractMetaData contains all meta data concerning the Liquidatecontract contract.
 var LiquidatecontractMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"contractILendingPoolAddressesProvider\",\"name\":\"_addressProvider\",\"type\":\"address\"},{\"internalType\":\"contractIUniswapV2Router02\",\"name\":\"_uniswapV2Router\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"stringFailure\",\"type\":\"string\"}],\"name\":\"ErrorHandled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_assetToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_flashAmt\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_collateral\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_userToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_swapPath\",\"type\":\"address[]\"},{\"internalType\":\"uint256\",\"name\":\"_gasCost\",\"type\":\"uint256\"}],\"name\":\"executeFlashLoans\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"assets\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"premiums\",\"type\":\"uint256[]\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"params\",\"type\":\"bytes\"}],\"name\":\"executeOperation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_collateral\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_liquidate_asset\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_userToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_receiveaToken\",\"type\":\"bool\"}],\"name\":\"liquidateLoan\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"asset_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"swapPath\",\"type\":\"address[]\"}],\"name\":\"swapToBarrowedAsset\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"contractILendingPoolAddressesProvider\",\"name\":\"_addressProvider\",\"type\":\"address\"},{\"internalType\":\"contractIUniswapV2Router02\",\"name\":\"_uniswapV2Router\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_protocolDataProvider\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_priceOracleGetter\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"stringFailure\",\"type\":\"string\"}],\"name\":\"ErrorHandled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_assetToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_flashAmt\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_collateral\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_userToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"_swapPath\",\"type\":\"address[]\"},{\"internalType\":\"uint256\",\"name\":\"_gasCost\",\"type\":\"uint256\"}],\"name\":\"executeFlashLoans\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_assets\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_amounts\",\"type\":\"uint256[]\"},{\"internalType\":\"uint256[]\",\"name\":\"_premiums\",\"type\":\"uint256[]\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"params\",\"type\":\"bytes\"}],\"name\":\"executeOperation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"getLastUserAssetData\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"currentATokenBalance\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"underlyingAsset\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"usageAsCollateralEnabled\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"priceInEth\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"notNull\",\"type\":\"bool\"}],\"internalType\":\"structLiquidateLoan.CollateralReserve[]\",\"name\":\"\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"currentTotalDebt\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"underlyingAsset\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"usageAsCollateralEnabled\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"priceInEth\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"notNull\",\"type\":\"bool\"}],\"internalType\":\"structLiquidateLoan.BorrowReserve[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_collateral\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_liquidate_asset\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_userToLiquidate\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_receiveaToken\",\"type\":\"bool\"}],\"name\":\"liquidateLoan\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenIndex\",\"type\":\"uint256\"}],\"name\":\"removeToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_tokenName\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"setToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_tokenAddress\",\"type\":\"address[]\"},{\"internalType\":\"string[]\",\"name\":\"_tokenName\",\"type\":\"string[]\"},{\"internalType\":\"uint256[]\",\"name\":\"decimals\",\"type\":\"uint256[]\"}],\"name\":\"setTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"asset_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"swapPath\",\"type\":\"address[]\"}],\"name\":\"swapToBarrowedAsset\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"tokenInfos\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"tokenName\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]",
 }
 
 // LiquidatecontractABI is the input ABI used to generate the binding from.
@@ -49,52 +71,53 @@ type LiquidatecontractCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LendpoolTransactor is an auto generated write-only Go binding around an Ethereum contract.
+// LiquidatecontractTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type LiquidatecontractTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LendpoolFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+// LiquidatecontractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type LiquidatecontractFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// LendpoolSession is an auto generated Go binding around an Ethereum contract,
+// LiquidatecontractSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type LiquidatecontractSession struct {
-	Contract     *Liquidatecontract        // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+	Contract     *Liquidatecontract // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts      // Call options to use throughout this session
+	TransactOpts bind.TransactOpts  // Transaction auth options to use throughout this session
 }
 
-// LendpoolCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// LiquidatecontractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type LiquidatecontractCallerSession struct {
 	Contract *LiquidatecontractCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts   // Call options to use throughout this session
+	CallOpts bind.CallOpts            // Call options to use throughout this session
 }
 
-// LendpoolTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// LiquidatecontractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type LiquidatecontractTransactorSession struct {
 	Contract     *LiquidatecontractTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts   // Transaction auth options to use throughout this session
+	TransactOpts bind.TransactOpts            // Transaction auth options to use throughout this session
 }
 
-// LendpoolRaw is an auto generated low-level Go binding around an Ethereum contract.
+// LiquidatecontractRaw is an auto generated low-level Go binding around an Ethereum contract.
 type LiquidatecontractRaw struct {
 	Contract *Liquidatecontract // Generic contract binding to access the raw methods on
 }
 
-// LendpoolCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+// LiquidatecontractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type LiquidatecontractCallerRaw struct {
 	Contract *LiquidatecontractCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// LendpoolTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+// LiquidatecontractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type LiquidatecontractTransactorRaw struct {
 	Contract *LiquidatecontractTransactor // Generic write-only contract binding to access the raw methods on
 }
+
 // NewLiquidatecontract creates a new instance of Liquidatecontract, bound to a specific deployed contract.
 func NewLiquidatecontract(address common.Address, backend bind.ContractBackend) (*Liquidatecontract, error) {
 	contract, err := bindLiquidatecontract(address, backend, backend, backend)
@@ -178,6 +201,38 @@ func (_Liquidatecontract *LiquidatecontractTransactorRaw) Transact(opts *bind.Tr
 	return _Liquidatecontract.Contract.contract.Transact(opts, method, params...)
 }
 
+// GetLastUserAssetData is a free data retrieval call binding the contract method 0xa7362345.
+//
+// Solidity: function getLastUserAssetData(address _user) view returns((uint256,string,address,uint256,bool,uint256,bool)[], (uint256,string,address,uint256,bool,uint256,bool)[])
+func (_Liquidatecontract *LiquidatecontractCaller) GetLastUserAssetData(opts *bind.CallOpts, _user common.Address) ([]LiquidateLoanCollateralReserve, []LiquidateLoanBorrowReserve, error) {
+	var out []interface{}
+	err := _Liquidatecontract.contract.Call(opts, &out, "getLastUserAssetData", _user)
+
+	if err != nil {
+		return *new([]LiquidateLoanCollateralReserve), *new([]LiquidateLoanBorrowReserve), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]LiquidateLoanCollateralReserve)).(*[]LiquidateLoanCollateralReserve)
+	out1 := *abi.ConvertType(out[1], new([]LiquidateLoanBorrowReserve)).(*[]LiquidateLoanBorrowReserve)
+
+	return out0, out1, err
+
+}
+
+// GetLastUserAssetData is a free data retrieval call binding the contract method 0xa7362345.
+//
+// Solidity: function getLastUserAssetData(address _user) view returns((uint256,string,address,uint256,bool,uint256,bool)[], (uint256,string,address,uint256,bool,uint256,bool)[])
+func (_Liquidatecontract *LiquidatecontractSession) GetLastUserAssetData(_user common.Address) ([]LiquidateLoanCollateralReserve, []LiquidateLoanBorrowReserve, error) {
+	return _Liquidatecontract.Contract.GetLastUserAssetData(&_Liquidatecontract.CallOpts, _user)
+}
+
+// GetLastUserAssetData is a free data retrieval call binding the contract method 0xa7362345.
+//
+// Solidity: function getLastUserAssetData(address _user) view returns((uint256,string,address,uint256,bool,uint256,bool)[], (uint256,string,address,uint256,bool,uint256,bool)[])
+func (_Liquidatecontract *LiquidatecontractCallerSession) GetLastUserAssetData(_user common.Address) ([]LiquidateLoanCollateralReserve, []LiquidateLoanBorrowReserve, error) {
+	return _Liquidatecontract.Contract.GetLastUserAssetData(&_Liquidatecontract.CallOpts, _user)
+}
+
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
 // Solidity: function isOwner() view returns(bool)
@@ -240,6 +295,56 @@ func (_Liquidatecontract *LiquidatecontractCallerSession) Owner() (common.Addres
 	return _Liquidatecontract.Contract.Owner(&_Liquidatecontract.CallOpts)
 }
 
+// TokenInfos is a free data retrieval call binding the contract method 0x7c13774b.
+//
+// Solidity: function tokenInfos(uint256 ) view returns(address tokenAddress, string tokenName, uint256 decimals)
+func (_Liquidatecontract *LiquidatecontractCaller) TokenInfos(opts *bind.CallOpts, arg0 *big.Int) (struct {
+	TokenAddress common.Address
+	TokenName    string
+	Decimals     *big.Int
+}, error) {
+	var out []interface{}
+	err := _Liquidatecontract.contract.Call(opts, &out, "tokenInfos", arg0)
+
+	outstruct := new(struct {
+		TokenAddress common.Address
+		TokenName    string
+		Decimals     *big.Int
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.TokenAddress = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	outstruct.TokenName = *abi.ConvertType(out[1], new(string)).(*string)
+	outstruct.Decimals = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
+}
+
+// TokenInfos is a free data retrieval call binding the contract method 0x7c13774b.
+//
+// Solidity: function tokenInfos(uint256 ) view returns(address tokenAddress, string tokenName, uint256 decimals)
+func (_Liquidatecontract *LiquidatecontractSession) TokenInfos(arg0 *big.Int) (struct {
+	TokenAddress common.Address
+	TokenName    string
+	Decimals     *big.Int
+}, error) {
+	return _Liquidatecontract.Contract.TokenInfos(&_Liquidatecontract.CallOpts, arg0)
+}
+
+// TokenInfos is a free data retrieval call binding the contract method 0x7c13774b.
+//
+// Solidity: function tokenInfos(uint256 ) view returns(address tokenAddress, string tokenName, uint256 decimals)
+func (_Liquidatecontract *LiquidatecontractCallerSession) TokenInfos(arg0 *big.Int) (struct {
+	TokenAddress common.Address
+	TokenName    string
+	Decimals     *big.Int
+}, error) {
+	return _Liquidatecontract.Contract.TokenInfos(&_Liquidatecontract.CallOpts, arg0)
+}
+
 // ExecuteFlashLoans is a paid mutator transaction binding the contract method 0x72e59479.
 //
 // Solidity: function executeFlashLoans(address _assetToLiquidate, uint256 _flashAmt, address _collateral, address _userToLiquidate, uint256 _amountOutMin, address[] _swapPath, uint256 _gasCost) returns()
@@ -263,23 +368,23 @@ func (_Liquidatecontract *LiquidatecontractTransactorSession) ExecuteFlashLoans(
 
 // ExecuteOperation is a paid mutator transaction binding the contract method 0x920f5c84.
 //
-// Solidity: function executeOperation(address[] assets, uint256[] amounts, uint256[] premiums, address , bytes params) returns(bool)
-func (_Liquidatecontract *LiquidatecontractTransactor) ExecuteOperation(opts *bind.TransactOpts, assets []common.Address, amounts []*big.Int, premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
-	return _Liquidatecontract.contract.Transact(opts, "executeOperation", assets, amounts, premiums, arg3, params)
+// Solidity: function executeOperation(address[] _assets, uint256[] _amounts, uint256[] _premiums, address , bytes params) returns(bool)
+func (_Liquidatecontract *LiquidatecontractTransactor) ExecuteOperation(opts *bind.TransactOpts, _assets []common.Address, _amounts []*big.Int, _premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
+	return _Liquidatecontract.contract.Transact(opts, "executeOperation", _assets, _amounts, _premiums, arg3, params)
 }
 
 // ExecuteOperation is a paid mutator transaction binding the contract method 0x920f5c84.
 //
-// Solidity: function executeOperation(address[] assets, uint256[] amounts, uint256[] premiums, address , bytes params) returns(bool)
-func (_Liquidatecontract *LiquidatecontractSession) ExecuteOperation(assets []common.Address, amounts []*big.Int, premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
-	return _Liquidatecontract.Contract.ExecuteOperation(&_Liquidatecontract.TransactOpts, assets, amounts, premiums, arg3, params)
+// Solidity: function executeOperation(address[] _assets, uint256[] _amounts, uint256[] _premiums, address , bytes params) returns(bool)
+func (_Liquidatecontract *LiquidatecontractSession) ExecuteOperation(_assets []common.Address, _amounts []*big.Int, _premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.ExecuteOperation(&_Liquidatecontract.TransactOpts, _assets, _amounts, _premiums, arg3, params)
 }
 
 // ExecuteOperation is a paid mutator transaction binding the contract method 0x920f5c84.
 //
-// Solidity: function executeOperation(address[] assets, uint256[] amounts, uint256[] premiums, address , bytes params) returns(bool)
-func (_Liquidatecontract *LiquidatecontractTransactorSession) ExecuteOperation(assets []common.Address, amounts []*big.Int, premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
-	return _Liquidatecontract.Contract.ExecuteOperation(&_Liquidatecontract.TransactOpts, assets, amounts, premiums, arg3, params)
+// Solidity: function executeOperation(address[] _assets, uint256[] _amounts, uint256[] _premiums, address , bytes params) returns(bool)
+func (_Liquidatecontract *LiquidatecontractTransactorSession) ExecuteOperation(_assets []common.Address, _amounts []*big.Int, _premiums []*big.Int, arg3 common.Address, params []byte) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.ExecuteOperation(&_Liquidatecontract.TransactOpts, _assets, _amounts, _premiums, arg3, params)
 }
 
 // LiquidateLoan is a paid mutator transaction binding the contract method 0x39908e92.
@@ -303,6 +408,27 @@ func (_Liquidatecontract *LiquidatecontractTransactorSession) LiquidateLoan(_col
 	return _Liquidatecontract.Contract.LiquidateLoan(&_Liquidatecontract.TransactOpts, _collateral, _liquidate_asset, _userToLiquidate, _amount, _receiveaToken)
 }
 
+// RemoveToken is a paid mutator transaction binding the contract method 0x36c5d724.
+//
+// Solidity: function removeToken(uint256 tokenIndex) returns()
+func (_Liquidatecontract *LiquidatecontractTransactor) RemoveToken(opts *bind.TransactOpts, tokenIndex *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.contract.Transact(opts, "removeToken", tokenIndex)
+}
+
+// RemoveToken is a paid mutator transaction binding the contract method 0x36c5d724.
+//
+// Solidity: function removeToken(uint256 tokenIndex) returns()
+func (_Liquidatecontract *LiquidatecontractSession) RemoveToken(tokenIndex *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.RemoveToken(&_Liquidatecontract.TransactOpts, tokenIndex)
+}
+
+// RemoveToken is a paid mutator transaction binding the contract method 0x36c5d724.
+//
+// Solidity: function removeToken(uint256 tokenIndex) returns()
+func (_Liquidatecontract *LiquidatecontractTransactorSession) RemoveToken(tokenIndex *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.RemoveToken(&_Liquidatecontract.TransactOpts, tokenIndex)
+}
+
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
 //
 // Solidity: function renounceOwnership() returns()
@@ -322,6 +448,48 @@ func (_Liquidatecontract *LiquidatecontractSession) RenounceOwnership() (*types.
 // Solidity: function renounceOwnership() returns()
 func (_Liquidatecontract *LiquidatecontractTransactorSession) RenounceOwnership() (*types.Transaction, error) {
 	return _Liquidatecontract.Contract.RenounceOwnership(&_Liquidatecontract.TransactOpts)
+}
+
+// SetToken is a paid mutator transaction binding the contract method 0xa9ae1653.
+//
+// Solidity: function setToken(address _tokenAddress, string _tokenName, uint256 decimals) returns()
+func (_Liquidatecontract *LiquidatecontractTransactor) SetToken(opts *bind.TransactOpts, _tokenAddress common.Address, _tokenName string, decimals *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.contract.Transact(opts, "setToken", _tokenAddress, _tokenName, decimals)
+}
+
+// SetToken is a paid mutator transaction binding the contract method 0xa9ae1653.
+//
+// Solidity: function setToken(address _tokenAddress, string _tokenName, uint256 decimals) returns()
+func (_Liquidatecontract *LiquidatecontractSession) SetToken(_tokenAddress common.Address, _tokenName string, decimals *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.SetToken(&_Liquidatecontract.TransactOpts, _tokenAddress, _tokenName, decimals)
+}
+
+// SetToken is a paid mutator transaction binding the contract method 0xa9ae1653.
+//
+// Solidity: function setToken(address _tokenAddress, string _tokenName, uint256 decimals) returns()
+func (_Liquidatecontract *LiquidatecontractTransactorSession) SetToken(_tokenAddress common.Address, _tokenName string, decimals *big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.SetToken(&_Liquidatecontract.TransactOpts, _tokenAddress, _tokenName, decimals)
+}
+
+// SetTokens is a paid mutator transaction binding the contract method 0x730615b5.
+//
+// Solidity: function setTokens(address[] _tokenAddress, string[] _tokenName, uint256[] decimals) returns()
+func (_Liquidatecontract *LiquidatecontractTransactor) SetTokens(opts *bind.TransactOpts, _tokenAddress []common.Address, _tokenName []string, decimals []*big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.contract.Transact(opts, "setTokens", _tokenAddress, _tokenName, decimals)
+}
+
+// SetTokens is a paid mutator transaction binding the contract method 0x730615b5.
+//
+// Solidity: function setTokens(address[] _tokenAddress, string[] _tokenName, uint256[] decimals) returns()
+func (_Liquidatecontract *LiquidatecontractSession) SetTokens(_tokenAddress []common.Address, _tokenName []string, decimals []*big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.SetTokens(&_Liquidatecontract.TransactOpts, _tokenAddress, _tokenName, decimals)
+}
+
+// SetTokens is a paid mutator transaction binding the contract method 0x730615b5.
+//
+// Solidity: function setTokens(address[] _tokenAddress, string[] _tokenName, uint256[] decimals) returns()
+func (_Liquidatecontract *LiquidatecontractTransactorSession) SetTokens(_tokenAddress []common.Address, _tokenName []string, decimals []*big.Int) (*types.Transaction, error) {
+	return _Liquidatecontract.Contract.SetTokens(&_Liquidatecontract.TransactOpts, _tokenAddress, _tokenName, decimals)
 }
 
 // SwapToBarrowedAsset is a paid mutator transaction binding the contract method 0xa1f424e6.

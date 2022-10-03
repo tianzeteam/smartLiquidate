@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
-
+pragma experimental ABIEncoderV2;
 import { FlashLoanReceiverBase } from "./FlashLoanReceiverBase.sol";
 import { ILendingPool, ILendingPoolAddressesProvider, IERC20 } from "./Interfaces.sol";
 import { SafeMath } from "./Libraries.sol";
 import "./Ownable.sol";
 
-import "./IUniswapV2Router02.sol";
+import "https://github.com/sushiswap/sushiswap/blob/master/protocols/sushiswap/contracts/interfaces/IUniswapV2Router02.sol";
+
 
 /*
 * A contract that liquidates an aave loan using a flash loan:
@@ -14,28 +15,144 @@ import "./IUniswapV2Router02.sol";
 *   call executeFlashLoans() to begin the liquidation
 *
 */
+interface IPriceOracleGetter {
+  function getAssetPrice(address asset) external view returns (uint256);
+}
+interface IProtocolDataProvider {
+
+  function getUserReserveData(address asset, address user)
+    external
+    view
+    returns (
+      uint256 currentATokenBalance,
+      uint256 currentStableDebt,
+      uint256 currentVariableDebt,
+      uint256 principalStableDebt,
+      uint256 scaledVariableDebt,
+      uint256 stableBorrowRate,
+      uint256 liquidityRate,
+      uint40 stableRateLastUpdated,
+      bool usageAsCollateralEnabled
+    );
+}
+
 contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
-    IUniswapV2Router02 uniswapV2Router;
+    IUniswapV2Router02 private uniswapV2Router;
+
+    IPriceOracleGetter private priceOracleGetter;
+
     using SafeMath for uint256;
     event ErrorHandled(string stringFailure);
-
+    IProtocolDataProvider private protocolDataProvider ;
     // intantiate lending pool addresses provider and get lending pool address
-    constructor(ILendingPoolAddressesProvider _addressProvider, IUniswapV2Router02 _uniswapV2Router) FlashLoanReceiverBase(_addressProvider) public {
+    constructor(ILendingPoolAddressesProvider _addressProvider, IUniswapV2Router02 _uniswapV2Router,address _protocolDataProvider,address _priceOracleGetter) FlashLoanReceiverBase(_addressProvider) public {
         // instantiate UniswapV2 Router02
-        uniswapV2Router = IUniswapV2Router02(address(_uniswapV2Router)); //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+        uniswapV2Router = IUniswapV2Router02(address(_uniswapV2Router)); 
 
+        protocolDataProvider = IProtocolDataProvider(address(_protocolDataProvider));
 
+        priceOracleGetter = IPriceOracleGetter(address(_priceOracleGetter));
     }
     
+    struct TokenInfo {
+        address tokenAddress;
+        string  tokenName;
+        uint256 decimals;
+    }
     
+    TokenInfo[]   public    tokenInfos ;
+
+     function setToken(address  _tokenAddress,string memory _tokenName,uint256 decimals) external onlyOwner{
+       tokenInfos.push(TokenInfo({tokenAddress: _tokenAddress, tokenName: _tokenName, decimals:decimals}));
+
+     }
+     
+    function setTokens(address[] memory _tokenAddress,string[] memory _tokenName,uint256[] memory decimals) external onlyOwner{
+        uint length = _tokenAddress.length;
+        for(uint i=0;i<length;i++){
+              tokenInfos.push(TokenInfo({tokenAddress: _tokenAddress[i], tokenName: _tokenName[i], decimals:decimals[i]}));
+        }
+ 
+     }
+     
+    function removeToken(uint tokenIndex) public onlyOwner{
+        delete tokenInfos[tokenIndex];
+    }
+
+     struct CollateralReserve {
+         uint256 currentATokenBalance ;
+         string symbol;
+         address underlyingAsset;
+         uint256 decimals;
+         bool usageAsCollateralEnabled;
+         uint256 priceInEth;
+         bool notNull;
+        
+     }
+
+     struct BorrowReserve {
+         uint256 currentTotalDebt ;
+         string symbol;
+         address underlyingAsset;
+         uint256 decimals;
+         bool usageAsCollateralEnabled;
+         uint256 priceInEth;
+         bool notNull;
+     }
+
+     function getLastUserAssetData(address  _user) external view returns( CollateralReserve[] memory ,  BorrowReserve[] memory){
+         
+        uint256  length = tokenInfos.length;
+        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](5);
+        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](5);
+        uint8 collateralLastIndex =0;
+        uint8 borrowLastIndex = 0;
+        {
+            address   liquidateUser = _user;
+            for(uint256 i=0;i<length;i++){
+                    TokenInfo memory tokenInfo =tokenInfos[i];
+                    address tokenAddress = tokenInfo.tokenAddress;
+                    uint  decimals = tokenInfo.decimals;
+                    string memory tokenName = tokenInfo.tokenName ;
+
+                    (uint256 _currentATokenBalance,
+                     uint256 _currentStableDebt,
+                     uint256 _currentVariableDebt,
+                     ,
+                     ,
+                     ,
+                     ,
+                     ,
+                     bool _usageAsCollateralEnabled
+                    ) = protocolDataProvider.getUserReserveData(tokenAddress, liquidateUser);
+
+                    if (_currentATokenBalance > 0) {
+                        uint256 _priceInEth = priceOracleGetter.getAssetPrice(tokenAddress);
+                        _collateralReserves[collateralLastIndex]=CollateralReserve({currentATokenBalance:_currentATokenBalance,symbol:tokenName,underlyingAsset: tokenAddress,decimals:decimals,usageAsCollateralEnabled:_usageAsCollateralEnabled,priceInEth:_priceInEth,notNull:true});
+                        collateralLastIndex ++ ;
+                    }
+                    
+                    if (_currentStableDebt > 0 || _currentVariableDebt > 0){
+
+                        uint256 _priceInEth = priceOracleGetter.getAssetPrice(tokenAddress);
+                        uint256 _currentTotalDebt = _currentStableDebt.add(_currentVariableDebt);
+                        _borrowReserves[borrowLastIndex]= BorrowReserve({currentTotalDebt:_currentTotalDebt,symbol:tokenName,underlyingAsset: tokenAddress,decimals:decimals,usageAsCollateralEnabled:_usageAsCollateralEnabled,priceInEth:_priceInEth,notNull:true});
+                        borrowLastIndex ++ ;
+                    } 
+                    
+                }
+        }
+  
+       return (_collateralReserves , _borrowReserves);
+     }
     /**
         This function is called after your contract has received the flash loaned amount
      */
     function executeOperation(
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        uint256[] calldata premiums,
+        address[] calldata _assets,
+        uint256[] calldata _amounts,
+        uint256[] calldata _premiums,
         address ,
         bytes calldata params
     )
@@ -43,9 +160,9 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         override
         returns (bool)
     {
-        address  borrowAsset = assets[0];
-        uint256 liquidateAmount = amounts[0];
-        uint256 premium = premiums[0];
+        address  borrowAsset = _assets[0];
+        uint256 liquidateAmount = _amounts[0];
+        uint256 premium = _premiums[0];
         //collateral  the address of the token that we will be compensated in
         //userToLiquidate - id of the user to liquidate
         //amountOutMin - minimum amount of asset paid when swapping collateral
@@ -161,5 +278,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
             0
         );
     }
+
+
 
 }

@@ -27,7 +27,7 @@ import (
 	"k8s.io/klog"
 )
 
-func FlashLoans(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.LiquidateLoan, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address, userId string, _gasPrice string, _gasLimit int,_gasCost int64) string {
+func FlashLoans(_counter counter.Counter, engine *xorm.Engine, liquidateQueue *models.LiquidateQueue, liquidateAndLoanContract *liquidatecontract.Liquidatecontract, client *ethclient.Client, priKey string, _assetToLiquidate common.Address, _flashAmt *big.Int, _collateral common.Address, _userToLiquidate common.Address, _amountOutMin *big.Int, _swapPath []common.Address, userId string, _gasPrice string, _gasLimit int,_gasCost int64) string {
 
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {

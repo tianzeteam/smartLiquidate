@@ -1,8 +1,8 @@
 package models
 
 type AaveAsset struct {
-	CreateTime      int    `xorm:"not null INT(11)"`
-	UpdateTime      int    `xorm:"not null INT(11)"`
+	CreateTime      int64    `xorm:"not null INT(11)"`
+	UpdateTime      int64    `xorm:"not null INT(11)"`
 	UserId          string `xorm:"not null VARCHAR(255)"`
 	UnderlyingAsset string `xorm:"not null VARCHAR(255)"`
 	Status          string `xorm:"not null ENUM('close','open')"`
@@ -35,4 +35,41 @@ type LiquidateQueue struct {
 	CreateTime      int64  `xorm:"not null INT(11)"`
 	LiquidateTime   int64  `xorm:"not null INT(11)"`
 	Status          string `xorm:"not null ENUM('close','waiting')"`
+}
+
+
+type USER struct {
+	ID                    string `json:"id"`
+	BorrowedReservesCount int    `json:"borrowedReservesCount"`
+	CollateralReserve     []struct {
+		CurrentATokenBalance string `json:"currentATokenBalance"`
+		Reserve              struct {
+			UsageAsCollateralEnabled    bool   `json:"usageAsCollateralEnabled"`
+			ReserveLiquidationThreshold string `json:"reserveLiquidationThreshold"`
+			ReserveLiquidationBonus     string `json:"reserveLiquidationBonus"`
+			BorrowingEnabled            bool   `json:"borrowingEnabled"`
+			UtilizationRate             string `json:"utilizationRate"`
+			Symbol                      string `json:"symbol"`
+			UnderlyingAsset             string `json:"underlyingAsset"`
+			Price                       struct {
+				PriceInEth string `json:"priceInEth"`
+			} `json:"price"`
+			Decimals int `json:"decimals"`
+		} `json:"reserve"`
+	} `json:"collateralReserve"`
+	BorrowReserve []struct {
+		CurrentTotalDebt string `json:"currentTotalDebt"`
+		Reserve          struct {
+			UsageAsCollateralEnabled    bool   `json:"usageAsCollateralEnabled"`
+			ReserveLiquidationThreshold string `json:"reserveLiquidationThreshold"`
+			BorrowingEnabled            bool   `json:"borrowingEnabled"`
+			UtilizationRate             string `json:"utilizationRate"`
+			Symbol                      string `json:"symbol"`
+			UnderlyingAsset             string `json:"underlyingAsset"`
+			Price                       struct {
+				PriceInEth string `json:"priceInEth"`
+			} `json:"price"`
+			Decimals int `json:"decimals"`
+		} `json:"reserve"`
+	} `json:"borrowReserve"`
 }

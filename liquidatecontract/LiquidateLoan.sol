@@ -104,8 +104,8 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
      function getLastUserAssetData(address  _user) external view returns( CollateralReserve[] memory ,  BorrowReserve[] memory){
          
         uint256  length = tokenInfos.length;
-        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](5);
-        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](5);
+        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](12);
+        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](12);
         uint8 collateralLastIndex =0;
         uint8 borrowLastIndex = 0;
         {

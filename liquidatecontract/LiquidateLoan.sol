@@ -6,7 +6,7 @@ import { ILendingPool, ILendingPoolAddressesProvider, IERC20 } from "./Interface
 import { SafeMath } from "./Libraries.sol";
 import "./Ownable.sol";
 
-import "https://github.com/sushiswap/sushiswap/blob/master/protocols/sushiswap/contracts/interfaces/IUniswapV2Router02.sol";
+import "./IUniswapV2Router02.sol";
 
 
 /*
@@ -19,6 +19,7 @@ interface IPriceOracleGetter {
   function getAssetPrice(address asset) external view returns (uint256);
 }
 interface IProtocolDataProvider {
+
 
   function getUserReserveData(address asset, address user)
     external
@@ -38,13 +39,14 @@ interface IProtocolDataProvider {
 
 contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
-    IUniswapV2Router02 private uniswapV2Router;
+    IUniswapV2Router02 public uniswapV2Router;
 
-    IPriceOracleGetter private priceOracleGetter;
+    IPriceOracleGetter public priceOracleGetter;
+    IProtocolDataProvider public protocolDataProvider ;
 
     using SafeMath for uint256;
     event ErrorHandled(string stringFailure);
-    IProtocolDataProvider private protocolDataProvider ;
+   
     // intantiate lending pool addresses provider and get lending pool address
     constructor(ILendingPoolAddressesProvider _addressProvider, IUniswapV2Router02 _uniswapV2Router,address _protocolDataProvider,address _priceOracleGetter) FlashLoanReceiverBase(_addressProvider) public {
         // instantiate UniswapV2 Router02
@@ -55,6 +57,13 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         priceOracleGetter = IPriceOracleGetter(address(_priceOracleGetter));
     }
     
+    function setPriceOralce(address _priceOracleGetter) external onlyOwner{
+         priceOracleGetter = IPriceOracleGetter(_priceOracleGetter);
+    }
+
+    function setProtocolDataProvider(address _protocolDataProvider) external onlyOwner {
+           protocolDataProvider = IProtocolDataProvider(_protocolDataProvider);
+    }
     struct TokenInfo {
         address tokenAddress;
         string  tokenName;
@@ -62,6 +71,7 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
     }
     
     TokenInfo[]   public    tokenInfos ;
+
 
      function setToken(address  _tokenAddress,string memory _tokenName,uint256 decimals) external onlyOwner{
        tokenInfos.push(TokenInfo({tokenAddress: _tokenAddress, tokenName: _tokenName, decimals:decimals}));
@@ -103,14 +113,58 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
 
      function getLastUserAssetData(address  _user) external view returns( CollateralReserve[] memory ,  BorrowReserve[] memory){
          
-        uint256  length = tokenInfos.length;
-        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](12);
-        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](12);
+        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](6);
+        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](6);
         uint8 collateralLastIndex =0;
         uint8 borrowLastIndex = 0;
         {
             address   liquidateUser = _user;
-            for(uint256 i=0;i<length;i++){
+            for(uint256 i=0;i<18;i++){
+                    TokenInfo memory tokenInfo =tokenInfos[i];
+                    address tokenAddress = tokenInfo.tokenAddress;
+                    uint  decimals = tokenInfo.decimals;
+                    string memory tokenName = tokenInfo.tokenName ;
+
+                    (uint256 _currentATokenBalance,
+                     uint256 _currentStableDebt,
+                     uint256 _currentVariableDebt,
+                     ,
+                     ,
+                     ,
+                     ,
+                     ,
+                     bool _usageAsCollateralEnabled
+                    ) = protocolDataProvider.getUserReserveData(tokenAddress, liquidateUser);
+
+                    if (_currentATokenBalance > 0) {
+                        uint256 _priceInEth = priceOracleGetter.getAssetPrice(tokenAddress);
+                        _collateralReserves[collateralLastIndex]=CollateralReserve({currentATokenBalance:_currentATokenBalance,symbol:tokenName,underlyingAsset: tokenAddress,decimals:decimals,usageAsCollateralEnabled:_usageAsCollateralEnabled,priceInEth:_priceInEth,notNull:true});
+                        collateralLastIndex ++ ;
+                    }
+                    
+                    if (_currentStableDebt > 0 || _currentVariableDebt > 0){
+                        uint256 _priceInEth = priceOracleGetter.getAssetPrice(tokenAddress);
+                        uint256 _currentTotalDebt = _currentStableDebt.add(_currentVariableDebt);
+                        _borrowReserves[borrowLastIndex]= BorrowReserve({currentTotalDebt:_currentTotalDebt,symbol:tokenName,underlyingAsset: tokenAddress,decimals:decimals,usageAsCollateralEnabled:_usageAsCollateralEnabled,priceInEth:_priceInEth,notNull:true});
+                        borrowLastIndex ++ ;
+                    } 
+                    
+                }
+        }
+  
+       return (_collateralReserves , _borrowReserves);
+     }
+
+     function getLastUserAssetDataExtent(address  _user) external view returns( CollateralReserve[] memory ,  BorrowReserve[] memory){
+         
+        uint256  length = tokenInfos.length;
+        CollateralReserve[] memory _collateralReserves =  new CollateralReserve[](6);
+        BorrowReserve[] memory _borrowReserves =  new BorrowReserve[](6);
+        uint8 collateralLastIndex =0;
+        uint8 borrowLastIndex = 0;
+        {
+            address   liquidateUser = _user;
+            for(uint256 i=18;i<length;i++){
                     TokenInfo memory tokenInfo =tokenInfos[i];
                     address tokenAddress = tokenInfo.tokenAddress;
                     uint  decimals = tokenInfo.decimals;
@@ -173,7 +227,11 @@ contract LiquidateLoan is FlashLoanReceiverBase, Ownable {
         liquidateLoan(collateral, borrowAsset, userToLiquidate, liquidateAmount, false);
 
         //swap collateral from liquidate back to asset from flashloan to pay it off
-        swapToBarrowedAsset(collateral,amountOutMin, swapPath);
+        uint256 length = swapPath.length;
+        if(swapPath[0] != swapPath[length-1]){
+            swapToBarrowedAsset(collateral,amountOutMin, swapPath);
+        }
+        
 
         //Pay to owner the balance after fees
         uint256 profit = calcProfits(IERC20(borrowAsset).balanceOf(address(this)),liquidateAmount,premium,gasCost);

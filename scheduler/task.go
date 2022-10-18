@@ -5,7 +5,10 @@ import (
 	"math"
 	"math/big"
 	"swap/config"
+	"swap/oraclecontract"
 	"time"
+
+	"swap/helpcontract"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/xormplus/xorm"
@@ -19,7 +22,7 @@ import (
 	"k8s.io/klog"
 )
 
-func UpdateAssetTask(engine *xorm.Engine, liquidateContract *liquidatecontract.Liquidatecontract) {
+/* func UpdateAssetTask(engine *xorm.Engine, liquidateContract *liquidatecontract.Liquidatecontract) {
 	log.Println("--------------更新清算数据任务开始-------------")
 	liquidateUser := new(models.LiquidateUser)
 	users, err := engine.Where("id >?", 1).Rows(liquidateUser)
@@ -36,11 +39,79 @@ func UpdateAssetTask(engine *xorm.Engine, liquidateContract *liquidatecontract.L
 		}
 		collateralReserves, borrowReserves, error := liquidateContract.GetLastUserAssetData(nil, common.HexToAddress(userId))
 		if error != nil {
+			klog.Errorln("userid ",userId)
 			klog.Error(error)
 			continue
 		}
 		//klog.Info("collateralReserves ", collateralReserves)
 		//klog.Info("borrowReserves ", borrowReserves)
+		_updateCollateral(engine, collateralReserves, userId)
+		_updateBorrow(engine, borrowReserves, userId)
+
+	}
+
+} */
+
+func UpdateAssetTask(engine *xorm.Engine, helpcontract *helpcontract.Helpcontract,priceOracle *oraclecontract.Oraclecontract,tokenDatas []models.TokenMeta) {
+	log.Println("--------------更新清算数据任务开始-------------")
+	liquidateUser := new(models.LiquidateUser)
+	users, err := engine.Where("id >?", 1).Rows(liquidateUser)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer users.Close()
+
+	for users.Next() {
+		err = users.Scan(liquidateUser)
+		userId := liquidateUser.UserId
+		if err != nil {
+			klog.Error(err)
+			continue
+		}
+        var startTime = time.Now().UnixMilli()
+		var collateralReserves []liquidatecontract.LiquidateLoanCollateralReserve   
+        var borrowReserves []liquidatecontract.LiquidateLoanBorrowReserve
+		nextId:
+		for _,tokenData := range tokenDatas {
+			tokenAddress :=tokenData.TokenAddress
+			tokenNames := tokenData.Symbol
+			tokenDecimals :=tokenData.Decimals
+			assetReserves, error := helpcontract.GetUserReserveData(nil, tokenAddress,common.HexToAddress(userId))
+			if error != nil {
+				klog.Error(error)
+				break  nextId
+			}
+
+            _currentATokenBalance := assetReserves.CurrentATokenBalance
+            _currentStableDebt := assetReserves.CurrentStableDebt
+            _currentVariableDebt := assetReserves.CurrentVariableDebt
+           _usageAsCollateralEnabled := assetReserves.UsageAsCollateralEnabled
+                 
+           if _currentATokenBalance.Cmp(big.NewInt(0)) >0 {
+			_priceInEth ,error := priceOracle.GetAssetPrice(nil,tokenAddress)
+			if error !=nil {
+				klog.Error(error)
+				break nextId
+			}
+		     newReserve := liquidatecontract.LiquidateLoanCollateralReserve{CurrentATokenBalance:_currentATokenBalance,Symbol:tokenNames,UnderlyingAsset: tokenAddress,Decimals:tokenDecimals,UsageAsCollateralEnabled:_usageAsCollateralEnabled,PriceInEth:_priceInEth,NotNull:true}
+			 collateralReserves = append(collateralReserves,newReserve)
+		   }
+
+		   if _currentStableDebt.Cmp( big.NewInt(0) ) >0 || _currentVariableDebt.Cmp(big.NewInt(0))>0 {
+			_priceInEth ,error := priceOracle.GetAssetPrice(nil,tokenAddress)
+			if error !=nil {
+				klog.Error(error)
+				break nextId
+			}
+			 _currentDebt  := _currentStableDebt.Add(_currentStableDebt,_currentVariableDebt)
+			 newReserve := liquidatecontract.LiquidateLoanBorrowReserve{CurrentTotalDebt:_currentDebt,Symbol:tokenNames,UnderlyingAsset: tokenAddress,Decimals:tokenDecimals,UsageAsCollateralEnabled:_usageAsCollateralEnabled,PriceInEth:_priceInEth,NotNull:true}
+			 borrowReserves = append(borrowReserves,newReserve)
+		   }
+		}
+		var endTime = time.Now().UnixMilli()
+		klog.Info("lostTime  ", endTime -startTime)
+		klog.Info("collateralReserves ", collateralReserves)
+		klog.Info("borrowReserves ", borrowReserves)
 		_updateCollateral(engine, collateralReserves, userId)
 		_updateBorrow(engine, borrowReserves, userId)
 
@@ -242,7 +313,6 @@ func Task(engine *xorm.Engine, config *config.Config, client *ethclient.Client) 
 			errs := engine.Where("user_id = ?", userId).Find(&currLiquidateEntry)
 			if errs != nil {
 				klog.Error(errs)
-
 			}
 			if len(currLiquidateEntry) == 0 && currUserBorrow[0].UnderlyingAsset != currUserCollateral[0].UnderlyingAsset {
 				liquidateQueue := new(models.LiquidateQueue)

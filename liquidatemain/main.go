@@ -10,6 +10,8 @@ import (
 	"swap/counter"
 	"swap/deploy"
 	"swap/liquidatecontract"
+	"swap/helpcontract"
+	"swap/oraclecontract"
 	models "swap/models"
 	"swap/scheduler"
 	"swap/utils"
@@ -29,13 +31,13 @@ func main() {
 
 	config := InitConfig()
 	engine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
-	taskEngine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
+	//taskEngine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
 	fetchEngine, _ := xorm.NewEngine("mysql", config.App.DatabaseUrl)
 	client, err := ethclient.Dial(config.Account.RpcHttpUrl)
 
 	if err != nil {
-		klog.Fatal(err)
-
+		klog.Fatal("访问rpc节点网络问题,清算进程退出")
+		return
 	}
 
 	opts := &bind.CallOpts{
@@ -46,24 +48,26 @@ func main() {
 	lendpoolContract, _ := liquidatecontract.NewLendPool(common.HexToAddress(config.Contract.LendpoolContract), client)
 	liquidateAndLoanContract, _ := liquidatecontract.NewLiquidatecontract(common.HexToAddress(config.Contract.LiquidateLoanContract), client)
 	uniswapFactoryContract, err := liquidatecontract.NewFactory(common.HexToAddress(config.Contract.UniswapV2Factory), client)
+	priceOracle,_ := oraclecontract.NewOraclecontract(common.HexToAddress("0xA50ba011c48153De246E5192C8f9258A2ba79Ca9"), client)
+    helpcontract,_:= helpcontract.NewHelpcontract(common.HexToAddress("0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d"), client)
 	if err != nil {
 		klog.Fatal(err)
 	}
 	deploy.GetTokenIndex(liquidateAndLoanContract)
+    tokensMeta := deploy.GetAllTokens()
 	goScheduler := gocron.NewScheduler(time.UTC) // 使用UTC时区
-	goScheduler.Every(60).Seconds().WaitForSchedule().Do(scheduler.UpdateAssetTask, fetchEngine, liquidateAndLoanContract)
-	goScheduler.Every(60).Seconds().WaitForSchedule().Do(scheduler.FetchTask, fetchEngine)
-	goScheduler.Every(60).Seconds().WaitForSchedule().Do(scheduler.Task, taskEngine, config, client)
+	goScheduler.Every(20).Seconds().WaitForSchedule().Do(scheduler.UpdateAssetTask, fetchEngine, helpcontract,priceOracle,tokensMeta)
+	//goScheduler.Every(60).Seconds().WaitForSchedule().Do(scheduler.FetchTask, fetchEngine)
+	//goScheduler.Every(60).Seconds().WaitForSchedule().Do(scheduler.Task, taskEngine, config, client)
 	goScheduler.StartAsync()
 
 	nonce, err := utils.GetNonce(client, config.Account.AccountPriKey)
-	counter := counter.NewMutexCounter(nonce)
-	//deploy.PushMainnetToken(counter,liquidateAndLoanContract,client,config.Account.AccountPriKey,config.Account.GasPrice,config.Account.GasLimit)
-	klog.Infoln(" counter ", counter.Read())
 	if err != nil {
-		klog.Fatal("访问rpc节点网络问题,清算进程退出")
+		klog.Fatal("获取account nonce值错误,清算进程退出")
 		return
 	}
+	counter := counter.NewMutexCounter(nonce)
+	klog.Infoln(" counter ", counter.Read())
 
 	asyn_channel := make(chan models.LiquidateQueue, 120) // capacity size > rows
 
@@ -93,7 +97,6 @@ func main() {
 					klog.Error(err)
 				}
 				// Goroutine
-
 				if Runing {
 					go func() {
 						ConsumerQueue := <-asyn_channel
@@ -104,7 +107,6 @@ func main() {
 			}
 		}
 		klog.Info("进入 sleep 过程")
-
 		time.Sleep(time.Duration(5) * time.Second)
 
 	}
@@ -123,5 +125,6 @@ func InitConfig() *config.Config {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	//fmt.Println("config path ::", _config)
 	return _config
 }

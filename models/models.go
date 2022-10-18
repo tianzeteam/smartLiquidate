@@ -1,8 +1,14 @@
 package models
 
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+)
+
 type AaveAsset struct {
-	CreateTime      int64    `xorm:"not null INT(11)"`
-	UpdateTime      int64    `xorm:"not null INT(11)"`
+	CreateTime      int64  `xorm:"not null INT(11)"`
+	UpdateTime      int64  `xorm:"not null INT(11)"`
 	UserId          string `xorm:"not null VARCHAR(255)"`
 	UnderlyingAsset string `xorm:"not null VARCHAR(255)"`
 	Status          string `xorm:"not null ENUM('close','open')"`
@@ -36,7 +42,6 @@ type LiquidateQueue struct {
 	LiquidateTime   int64  `xorm:"not null INT(11)"`
 	Status          string `xorm:"not null ENUM('close','waiting')"`
 }
-
 
 type USER struct {
 	ID                    string `json:"id"`
@@ -72,4 +77,10 @@ type USER struct {
 			Decimals int `json:"decimals"`
 		} `json:"reserve"`
 	} `json:"borrowReserve"`
+}
+
+type TokenMeta struct {
+	Symbol       string
+	TokenAddress common.Address
+	Decimals     *big.Int
 }

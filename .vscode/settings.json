@@ -1,3 +1,4 @@
 {
-    "solidity.compileUsingLocalVersion": "/Users/tianze/Code/swap/soljson-v0.6.12+commit.27d51765.js"
+    "solidity.compileUsingLocalVersion": "/Users/tianze/Code/swap/soljson-v0.6.12+commit.27d51765.js",
+    "solidity.defaultCompiler": "localNodeModule"
 }
